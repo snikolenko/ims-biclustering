@@ -44,7 +44,7 @@ string input_filename = "";
 bool matlab_input = false;
 
 int help(char *argv[]) {
-    cout << "Usage: " << argv[0] << " --input=input_file" << endl;
+    cout << "Usage: " << argv[0] << " [--mat] --input=input_file" << endl;
     return 0;
 }
 
@@ -52,6 +52,7 @@ int main(int argc, char *argv[]) {
     const struct option longopts[] = {
         {"help",            no_argument,        0, 'h'},
         {"input",           required_argument,  0, 'i'},
+        {"mat",             no_argument,        0, 'm'},
         {0,0,0,0},
     };
 
@@ -64,18 +65,27 @@ int main(int argc, char *argv[]) {
         switch (iarg) {
             case 'h':   return help(argv);              break;
             case 'i':   input_filename = optarg;        break;
+            case 'm':   matlab_input = true;            break;
         }
     }
 
-    LOG("Reading input from " << input_filename << "...");
-
     mat_t *matfp;
-    if (input_filename.compare(input_filename.length()-3, 3, "mat")) {
-        LOG("\trecognized " << input_filename << " as a Matlab file, reading with matio.");
-        matfp = Mat_CreateVer(input_filename.c_str(), NULL, MAT_FT_MAT5);
+    matvar_t *matvar;
+
+    if (matlab_input) {
+        LOG("Reading input from " << input_filename << " as a Matlab file...");
+        matfp = Mat_Open(input_filename.c_str(), MAT_ACC_RDONLY);
+
         if ( NULL == matfp ) {
             fprintf(stderr,"Error creating MAT file \"matfile5.mat\"!\n");
             return EXIT_FAILURE;
+        }
+
+        LOG("Variables in " << input_filename << ":");
+        while ( (matvar = Mat_VarReadNextInfo(matfp)) != NULL ) {
+            LOG("\t" << matvar->name);
+            Mat_VarFree(matvar);
+            matvar = NULL;
         }
     }
 
@@ -93,13 +103,14 @@ int main(int argc, char *argv[]) {
     gsl_eigen_symmv (&m.matrix, eval, evec, w);
     gsl_eigen_symmv_free (w);
     gsl_eigen_symmv_sort (eval, evec, GSL_EIGEN_SORT_ABS_ASC);
-  
+
+    LOG("Sample output from gsl_eigen:")  
     for (uint i = 0; i < 4; ++i) {
         double eval_i = gsl_vector_get (eval, i);
         gsl_vector_view evec_i = gsl_matrix_column (evec, i);
 
-        printf ("eigenvalue = %g\n", eval_i);
-        printf ("eigenvector = \n");
+        LOG ("\teigenvalue = " << eval_i);
+        LOG ("\teigenvector = ");
         gsl_vector_fprintf (stdout, &evec_i.vector, "%g");
     }
 
