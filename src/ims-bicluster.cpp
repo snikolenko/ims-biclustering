@@ -43,6 +43,17 @@ using namespace std;
 string input_filename = "";
 bool matlab_input = false;
 
+// weight of spatial edges in the incidence matrix
+double alpha = 0.5;
+// edge weight between neighboring points
+double max_force = 120;
+// distance inside which we introduce spatial edges
+double threshold = 1.5;
+
+// k = round(8*spectors/9);
+// r = 0.20;
+
+
 int help(char *argv[]) {
     cout << "Usage: " << argv[0] << " [--mat] --input=input_file" << endl;
     return 0;
@@ -53,6 +64,7 @@ int main(int argc, char *argv[]) {
         {"help",            no_argument,        0, 'h'},
         {"input",           required_argument,  0, 'i'},
         {"mat",             no_argument,        0, 'm'},
+        {"alpha",           required_argument,  0, 'a'},
         {0,0,0,0},
     };
 
@@ -65,12 +77,20 @@ int main(int argc, char *argv[]) {
         switch (iarg) {
             case 'h':   return help(argv);              break;
             case 'i':   input_filename = optarg;        break;
+            case 'a':   alpha = atof(optarg);           break;
             case 'm':   matlab_input = true;            break;
         }
     }
 
+    // weight of bipartite edges in the incidence matrix
+    double beta = 1 - alpha;
+
     mat_t *matfp;
     matvar_t *matvar;
+
+    uint num_pixels, len_spectrum;
+    gsl_matrix *g_spectra;
+    double *maxima, *specsdiag, *pixdiag;
 
     if (matlab_input) {
         LOG("Reading input from " << input_filename << " as a Matlab file...");
@@ -81,13 +101,36 @@ int main(int argc, char *argv[]) {
             return EXIT_FAILURE;
         }
 
-        LOG("Variables in " << input_filename << ":");
-        while ( (matvar = Mat_VarReadNextInfo(matfp)) != NULL ) {
-            LOG("\t" << matvar->name);
-            Mat_VarFree(matvar);
-            matvar = NULL;
+        matvar = Mat_VarRead(matfp, "spectra");
+        num_pixels = matvar->dims[0];
+        len_spectrum = matvar->dims[1];
+
+        g_spectra = gsl_matrix_alloc(num_pixels, len_spectrum);
+        maxima = allocate_1d_with_default<double>(num_pixels, 0);
+        specsdiag = allocate_1d_with_default<double>(len_spectrum, 0);
+        pixdiag = allocate_1d_with_default<double>(num_pixels, 0);
+
+        double val;
+        LOG("\t\t" << ((double*)(matvar->data))[0] << " " << ((double*)(matvar->data))[1]);
+        for (uint i=0; i<num_pixels; ++i) {
+            for (uint j=0; j<len_spectrum; ++j) {
+                val = ((double*)(matvar->data))[num_pixels*j+i];
+                gsl_matrix_set(g_spectra, i, j, val);
+                specsdiag[j] += val;
+                pixdiag[i] += val;
+                if (val > maxima[i]) maxima[i] = val;
+            }
         }
+        Mat_VarFree(matvar);
+        Mat_Close(matfp);
     }
+
+    uint k = (uint)(8*num_pixels/(double)9);
+    double r = 0.20;
+
+
+
+
 
     double data[] = { 1.0  , 1/2.0, 1/3.0, 1/4.0,
                     1/2.0, 1/3.0, 1/4.0, 1/5.0,
@@ -114,9 +157,8 @@ int main(int argc, char *argv[]) {
         gsl_vector_fprintf (stdout, &evec_i.vector, "%g");
     }
 
+    gsl_matrix_free(g_spectra);
+
     LOG("All done.");
-    if (matlab_input) {
-        Mat_Close(matfp);
-    }
     return 0;
 }

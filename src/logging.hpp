@@ -13,6 +13,32 @@ using namespace std;
 
 static string algorithm_name_for_logging = "LDA";
 
+template<typename T>
+T *allocate_1d_with_default(size_t dim, T def) {
+    T *r = new T[dim];
+    for (size_t i=0; i < dim; ++i) {
+        r[i] = def;
+    }
+    return r;
+}
+
+template<typename T>
+T **allocate_2d_with_default(size_t dim1, size_t dim2, T def) {
+    T **r = new T*[dim1];
+    for (size_t i=0; i < dim1; ++i) {
+        r[i] = allocate_1d_with_default(dim2, def);
+    }
+    return r;
+}
+
+template<typename T>
+void delete_2d(size_t dim_one, T **r) {
+    for (size_t i=0; i<dim_one; ++i) {
+        delete r[i];
+    }
+    delete r;
+}
+
 struct perf_counter
 {
     perf_counter() { reset(); }
