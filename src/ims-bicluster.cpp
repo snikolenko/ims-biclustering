@@ -30,6 +30,8 @@
 #include <gsl/gsl_eigen.h>
 #include <omp.h>
 
+#include <matio.h>
+
 #define no_argument 0
 #define required_argument 1 
 #define optional_argument 2
@@ -39,6 +41,7 @@
 using namespace std;
 
 string input_filename = "";
+bool matlab_input = false;
 
 int help(char *argv[]) {
     cout << "Usage: " << argv[0] << " --input=input_file" << endl;
@@ -66,6 +69,16 @@ int main(int argc, char *argv[]) {
 
     LOG("Reading input from " << input_filename << "...");
 
+    mat_t *matfp;
+    if (input_filename.compare(input_filename.length()-3, 3, "mat")) {
+        LOG("\trecognized " << input_filename << " as a Matlab file, reading with matio.");
+        matfp = Mat_CreateVer(input_filename.c_str(), NULL, MAT_FT_MAT5);
+        if ( NULL == matfp ) {
+            fprintf(stderr,"Error creating MAT file \"matfile5.mat\"!\n");
+            return EXIT_FAILURE;
+        }
+    }
+
     double data[] = { 1.0  , 1/2.0, 1/3.0, 1/4.0,
                     1/2.0, 1/3.0, 1/4.0, 1/5.0,
                     1/3.0, 1/4.0, 1/5.0, 1/6.0,
@@ -91,5 +104,8 @@ int main(int argc, char *argv[]) {
     }
 
     LOG("All done.");
+    if (matlab_input) {
+        Mat_Close(matfp);
+    }
     return 0;
 }
