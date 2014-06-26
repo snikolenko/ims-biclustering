@@ -84,9 +84,10 @@ int main(int argc, char *argv[]) {
     mat_t *matfp;
     matvar_t *matvar;
 
-    uint num_pixels, len_spectrum;
+    uint len_spectrum, num_pixels;
     double **spectra;
     double *maxima, *specsdiag, *pixdiag;
+    double *xcoord, *ycoord;
     
     if (matlab_input) {
         LOG("Reading input from " << input_filename << " as a Matlab file...");
@@ -97,9 +98,22 @@ int main(int argc, char *argv[]) {
             return EXIT_FAILURE;
         }
 
-        matvar = Mat_VarRead(matfp, "spectra");
+        matvar = Mat_VarRead(matfp, "x_printed");
         num_pixels = matvar->dims[0];
-        len_spectrum = matvar->dims[1];
+        xcoord = allocate_1d_with_default<double>(num_pixels, 0);
+        for (uint j=0; j<num_pixels; ++j) {
+            xcoord[j] = ((double*)(matvar->data))[j];
+        }
+
+        matvar = Mat_VarRead(matfp, "y_printed");
+        ycoord = allocate_1d_with_default<double>(num_pixels, 0);
+        for (uint j=0; j<num_pixels; ++j) {
+            ycoord[j] = ((double*)(matvar->data))[j];
+        }
+        
+        matvar = Mat_VarRead(matfp, "spectra");
+        len_spectrum = matvar->dims[0];
+        LOG(matvar->dims[0] << " " << matvar->dims[1]);
 
         spectra = allocate_2d_with_default<double>(num_pixels, len_spectrum, 0);
         maxima = allocate_1d_with_default<double>(num_pixels, 0);
@@ -108,28 +122,28 @@ int main(int argc, char *argv[]) {
 
         double val;
         LOG("\t\t" << ((double*)(matvar->data))[0] << " " << ((double*)(matvar->data))[1]);
-        for (uint i=0; i<num_pixels; ++i) {
-            for (uint j=0; j<len_spectrum; ++j) {
-                val = ((double*)(matvar->data))[num_pixels*j+i];
-                spectra[i][j] = val;
-                specsdiag[j] += val;
-                pixdiag[i] += val;
-                if (val > maxima[i]) maxima[i] = val;
+        for (uint i=0; i<len_spectrum; ++i) {
+            for (uint j=0; j<num_pixels; ++j) {
+                val = ((double*)(matvar->data))[len_spectrum*j+i];
+                spectra[j][i] = val;
+                specsdiag[i] += val;
+                pixdiag[j] += val;
+                if (val > maxima[j]) maxima[j] = val;
             }
         }
         Mat_VarFree(matvar);
         Mat_Close(matfp);
     }
 
-    uint k = (uint)(8*num_pixels/(double)9);
+    uint k = (uint)(8*len_spectrum/(double)9);
     double r = 0.20;
 
     // find maximal elements
     LOG("Finding maximal elements...");
-    uint **U = allocate_2d_with_default<uint>(num_pixels, len_spectrum, 0);
-    vector<uint> indices(len_spectrum);
-    for (uint j=0; j<len_spectrum; ++j) { indices.push_back(j); }
-    for (uint i=0; i<num_pixels; ++i) {
+    uint **U = allocate_2d_with_default<uint>(len_spectrum, num_pixels, 0);
+    vector<uint> indices(num_pixels);
+    for (uint j=0; j<num_pixels; ++j) { indices.push_back(j); }
+    for (uint i=0; i<len_spectrum; ++i) {
         sort(begin(indices), end(indices), [&](const uint & j1, const uint & j2) {
             return spectra[i][j1] > spectra[i][j2];
         });
@@ -140,15 +154,17 @@ int main(int argc, char *argv[]) {
     }
 
     LOG("Filling incidence matrix...");
-    double **W = allocate_2d_with_default<double>(num_pixels, num_pixels, 0);
-    double *on_diag = allocate_1d_with_default<double>(num_pixels, 0);
-    double *little = allocate_1d_with_default<double>(num_pixels, 0);
-    
+    double **W = allocate_2d_with_default<double>(len_spectrum, len_spectrum, 0);
+    double *on_diag = allocate_1d_with_default<double>(len_spectrum, 0);
+    double *little = allocate_1d_with_default<double>(len_spectrum, 0);
+
+
+
 
     delete maxima;
     delete specsdiag;
     delete pixdiag;
-    delete_2d<double>(num_pixels, spectra);
+    delete_2d<double>(len_spectrum, spectra);
 
     LOG("All done.");
     return 0;
