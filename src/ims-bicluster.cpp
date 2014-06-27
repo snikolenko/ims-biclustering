@@ -48,7 +48,7 @@ double alpha = 0.5;
 // edge weight between neighboring points
 double max_force = 120;
 // distance inside which we introduce spatial edges
-double threshold = 1.5;
+double threshold = 1.5 * 1.5;
 
 int help(char *argv[]) {
     cout << "Usage: " << argv[0] << " [--mat] --input=input_file" << endl;
@@ -154,17 +154,118 @@ int main(int argc, char *argv[]) {
     }
 
     LOG("Filling incidence matrix...");
-    double **W = allocate_2d_with_default<double>(len_spectrum, len_spectrum, 0);
-    double *on_diag = allocate_1d_with_default<double>(len_spectrum, 0);
-    double *little = allocate_1d_with_default<double>(len_spectrum, 0);
+    double **W = allocate_2d_with_default<double>(num_pixels, num_pixels, 0);
+    double *on_diag = allocate_1d_with_default<double>(num_pixels, 0);
+    double *little = allocate_1d_with_default<double>(num_pixels, 0);
+
+    for (uint j1=0; j1<num_pixels; ++j1) {
+        for (uint j2=0; j2<j1; ++j2) {
+            double dist = (xcoord[j1]-xcoord[j2])*(xcoord[j1]-xcoord[j2]) + (ycoord[j1]-ycoord[j2])*(ycoord[j1]-ycoord[j2]);
+            if (dist <= threshold) {
+                uint common_pixels = 0;
+                for (uint i=0; i<len_spectrum; ++i) {
+                    if (U[i][j1] == 1 && U[i][j2] == 1) {
+                        ++common_pixels;
+                    }
+                }
+                W[j1][j2] = alpha * max_force * common_pixels / ( (len_spectrum - k) * dist );
+                W[j2][j1] = W[j1][j2];
+                on_diag[j1] += W[j1][j2];
+                on_diag[j2] += W[j1][j2];
+                if (common_pixels <= r * (len_spectrum - k)) {
+                    little[j1] += W[j1][j2];
+                    little[j2] += W[j1][j2];
+                }
+            }
+        }
+    }
+
+    LOG("Allocating big matrices...");
+    // double **bigL = allocate_2d_with_default<double>(num_pixels + len_spectrum, num_pixels + len_spectrum, 0);
+    // double **bigW = allocate_2d_with_default<double>(num_pixels + len_spectrum, num_pixels + len_spectrum, 0);
+    gsl_matrix *bigL = gsl_matrix_alloc (num_pixels + len_spectrum, num_pixels + len_spectrum);
+    gsl_matrix_set_zero(bigL);
+    gsl_matrix *bigW = gsl_matrix_alloc (num_pixels + len_spectrum, num_pixels + len_spectrum);
+    gsl_matrix_set_zero(bigW);
+
+    LOG("Filling big matrices...");
+
+    // top left block W
+    for (uint j1=0; j1<num_pixels; ++j1) {
+        for (uint j2=0; j2<num_pixels; ++j2) {
+            gsl_matrix_set(bigL, j1, j2, -W[j1][j2]);
+            // bigL[j1][j2] = -W[j1][j2];
+        }
+    }
+
+    // top right block beta*transpose(spectra)
+    for (uint j=0; j<num_pixels; ++j) {
+        for (uint i=0; i<len_spectrum; ++i) {
+            gsl_matrix_set(bigL, j, num_pixels + i, -beta * spectra[j][i]);
+            // bigL[j][num_pixels + i] = -beta * spectra[j][i];
+        }
+    }
+
+    // bottom left block beta*spectra
+    for (uint j=0; j<num_pixels; ++j) {
+        for (uint i=0; i<len_spectrum; ++i) {
+            gsl_matrix_set(bigL, num_pixels + i, j, -beta * spectra[j][i]);
+            // bigL[num_pixels + i][j] = -beta * spectra[j][i];
+        }
+    }
+
+    // bottom right block remains zero?
+
+    // now add bigD and init bigW
+    for (uint j=0; j<num_pixels; ++j) {
+        // bigL[j][j] += on_diag[j] + beta * pixdiag[j];
+        // bigW[j][j] += little[j] + beta * pixdiag[j];
+        gsl_matrix_set(bigL, j, j, gsl_matrix_get(bigL, j, j) + on_diag[j] + beta * pixdiag[j]);
+        gsl_matrix_set(bigW, j, j, gsl_matrix_get(bigW, j, j) + little[j] + beta * pixdiag[j]);
+    }
+
+    for (uint i=0; i<len_spectrum; ++i) {
+        // bigL[num_pixels + i][num_pixels + i] += beta * specsdiag[i];
+        // bigW[num_pixels + i][num_pixels + i] += beta * specsdiag[i];
+        gsl_matrix_set(bigL, num_pixels + i, num_pixels + i, gsl_matrix_get(bigL, num_pixels + i, num_pixels + i) + beta * specsdiag[i]);
+        gsl_matrix_set(bigW, num_pixels + i, num_pixels + i, gsl_matrix_get(bigW, num_pixels + i, num_pixels + i) + beta * specsdiag[i]);
+    }
+
+    // at this point we have bigL and bigW all set
+
+    LOG("Computing eigenvectors...");
+    uint mat_size = num_pixels + len_spectrum;
+    gsl_eigen_gen_workspace * gsl_workspace =  gsl_eigen_gen_alloc (mat_size);
+    gsl_vector_complex * vec_alpha = gsl_vector_complex_alloc(mat_size);
+    gsl_vector * vec_beta = gsl_vector_alloc(mat_size);
+
+    gsl_eigen_gen (bigL, bigW, vec_alpha, vec_beta, gsl_workspace);
+
+    printf("solution:\n");
+    {
+      gsl_vector_view a_real = gsl_vector_complex_real (vec_alpha);
+      gsl_vector_view a_imag = gsl_vector_complex_imag (vec_alpha);
+      int k;
+      for (k = 0; k < 4; k++) { 
+        printf("% .18e % .18e % .18e\n", 
+               gsl_vector_get(&a_real.vector,k), 
+               gsl_vector_get(&a_imag.vector,k),
+               gsl_vector_get(vec_beta,k));
+      }
+    }
+
+    gsl_eigen_gen_free (gsl_workspace);
 
 
-
+    // gsl_matrix_view g_bigW = gsl_matrix_view_array (bigW, num_pixels + len_spectrum, num_pixels + len_spectrum);
 
     delete maxima;
     delete specsdiag;
     delete pixdiag;
+    delete on_diag;
+    delete little;
     delete_2d<double>(len_spectrum, spectra);
+    delete_2d<double>(num_pixels, W);
 
     LOG("All done.");
     return 0;
