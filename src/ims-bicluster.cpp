@@ -32,6 +32,8 @@
 
 #include <matio.h>
 
+#include <armadillo>
+
 #define no_argument 0
 #define required_argument 1 
 #define optional_argument 2
@@ -185,8 +187,8 @@ int main(int argc, char *argv[]) {
     // double **bigW = allocate_2d_with_default<double>(num_pixels + len_spectrum, num_pixels + len_spectrum, 0);
     gsl_matrix *bigL = gsl_matrix_alloc (num_pixels + len_spectrum, num_pixels + len_spectrum);
     gsl_matrix_set_zero(bigL);
-    gsl_matrix *bigW = gsl_matrix_alloc (num_pixels + len_spectrum, num_pixels + len_spectrum);
-    gsl_matrix_set_zero(bigW);
+    // gsl_matrix *bigW = gsl_matrix_alloc (num_pixels + len_spectrum, num_pixels + len_spectrum);
+    // gsl_matrix_set_zero(bigW);
 
     LOG("Filling big matrices...");
 
@@ -221,14 +223,14 @@ int main(int argc, char *argv[]) {
         // bigL[j][j] += on_diag[j] + beta * pixdiag[j];
         // bigW[j][j] += little[j] + beta * pixdiag[j];
         gsl_matrix_set(bigL, j, j, gsl_matrix_get(bigL, j, j) + on_diag[j] + beta * pixdiag[j]);
-        gsl_matrix_set(bigW, j, j, gsl_matrix_get(bigW, j, j) + little[j] + beta * pixdiag[j]);
+        // gsl_matrix_set(bigW, j, j, gsl_matrix_get(bigW, j, j) + little[j] + beta * pixdiag[j]);
     }
 
     for (uint i=0; i<len_spectrum; ++i) {
         // bigL[num_pixels + i][num_pixels + i] += beta * specsdiag[i];
         // bigW[num_pixels + i][num_pixels + i] += beta * specsdiag[i];
         gsl_matrix_set(bigL, num_pixels + i, num_pixels + i, gsl_matrix_get(bigL, num_pixels + i, num_pixels + i) + beta * specsdiag[i]);
-        gsl_matrix_set(bigW, num_pixels + i, num_pixels + i, gsl_matrix_get(bigW, num_pixels + i, num_pixels + i) + beta * specsdiag[i]);
+        // gsl_matrix_set(bigW, num_pixels + i, num_pixels + i, gsl_matrix_get(bigW, num_pixels + i, num_pixels + i) + beta * specsdiag[i]);
     }
 
     // at this point we have bigL and bigW all set
