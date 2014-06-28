@@ -49,15 +49,17 @@
 
 using namespace std;
 
+typedef double t_ims_real;
+
 string input_filename = "";
 bool matlab_input = false;
 
 // weight of spatial edges in the incidence matrix
-double alpha = 0.5;
+t_ims_real alpha = 0.5;
 // edge weight between neighboring points
-double max_force = 120;
+t_ims_real max_force = 120;
 // distance inside which we introduce spatial edges
-double threshold = 1.5 * 1.5;
+t_ims_real threshold = 1.5 * 1.5;
 // how many eigenvalues to find
 int num_eigens = 10;
 
@@ -93,15 +95,15 @@ int main(int argc, char *argv[]) {
 
 
     // weight of bipartite edges in the incidence matrix
-    double beta = 1 - alpha;
+    t_ims_real beta = 1 - alpha;
 
     mat_t *matfp;
     matvar_t *matvar;
 
     uint len_spectrum, num_pixels;
-    double **spectra;
-    double *maxima, *specsdiag, *pixdiag;
-    double *xcoord, *ycoord;
+    t_ims_real **spectra;
+    t_ims_real *maxima, *specsdiag, *pixdiag;
+    t_ims_real *xcoord, *ycoord;
     
     if (matlab_input) {
         LOG("Reading input from " << input_filename << " as a Matlab file...");
@@ -114,30 +116,30 @@ int main(int argc, char *argv[]) {
 
         matvar = Mat_VarRead(matfp, "x_printed");
         num_pixels = matvar->dims[0];
-        xcoord = allocate_1d_with_default<double>(num_pixels, 0);
+        xcoord = allocate_1d_with_default<t_ims_real>(num_pixels, 0);
         for (uint j=0; j<num_pixels; ++j) {
-            xcoord[j] = ((double*)(matvar->data))[j];
+            xcoord[j] = ((t_ims_real*)(matvar->data))[j];
         }
 
         matvar = Mat_VarRead(matfp, "y_printed");
-        ycoord = allocate_1d_with_default<double>(num_pixels, 0);
+        ycoord = allocate_1d_with_default<t_ims_real>(num_pixels, 0);
         for (uint j=0; j<num_pixels; ++j) {
-            ycoord[j] = ((double*)(matvar->data))[j];
+            ycoord[j] = ((t_ims_real*)(matvar->data))[j];
         }
         
         matvar = Mat_VarRead(matfp, "spectra");
         len_spectrum = matvar->dims[0];
         LOG("Read " << matvar->dims[0] << " x " << matvar->dims[1] << " matrix.");
 
-        spectra = allocate_2d_with_default<double>(num_pixels, len_spectrum, 0);
-        maxima = allocate_1d_with_default<double>(num_pixels, 0);
-        specsdiag = allocate_1d_with_default<double>(len_spectrum, 0);
-        pixdiag = allocate_1d_with_default<double>(num_pixels, 0);
+        spectra = allocate_2d_with_default<t_ims_real>(num_pixels, len_spectrum, 0);
+        maxima = allocate_1d_with_default<t_ims_real>(num_pixels, 0);
+        specsdiag = allocate_1d_with_default<t_ims_real>(len_spectrum, 0);
+        pixdiag = allocate_1d_with_default<t_ims_real>(num_pixels, 0);
 
-        double val;
+        t_ims_real val;
         for (uint i=0; i<len_spectrum; ++i) {
             for (uint j=0; j<num_pixels; ++j) {
-                val = ((double*)(matvar->data))[len_spectrum*j+i];
+                val = ((t_ims_real*)(matvar->data))[len_spectrum*j+i];
                 spectra[j][i] = val;
                 specsdiag[i] += val;
                 pixdiag[j] += val;
@@ -148,8 +150,8 @@ int main(int argc, char *argv[]) {
         Mat_Close(matfp);
     }
 
-    uint k = (uint)(8*len_spectrum/(double)9);
-    double r = 0.20;
+    uint k = (uint)(8*len_spectrum/(t_ims_real)9);
+    t_ims_real r = 0.20;
 
     // find maximal elements
     LOG("Finding maximal elements...");
@@ -167,13 +169,13 @@ int main(int argc, char *argv[]) {
     }
 
     LOG("Filling incidence matrix...");
-    double **W = allocate_2d_with_default<double>(num_pixels, num_pixels, 0);
-    double *on_diag = allocate_1d_with_default<double>(num_pixels, 0);
-    double *little = allocate_1d_with_default<double>(num_pixels, 0);
+    t_ims_real **W = allocate_2d_with_default<t_ims_real>(num_pixels, num_pixels, 0);
+    t_ims_real *on_diag = allocate_1d_with_default<t_ims_real>(num_pixels, 0);
+    t_ims_real *little = allocate_1d_with_default<t_ims_real>(num_pixels, 0);
 
     for (uint j1=0; j1<num_pixels; ++j1) {
         for (uint j2=0; j2<j1; ++j2) {
-            double dist = (xcoord[j1]-xcoord[j2])*(xcoord[j1]-xcoord[j2]) + (ycoord[j1]-ycoord[j2])*(ycoord[j1]-ycoord[j2]);
+            t_ims_real dist = (xcoord[j1]-xcoord[j2])*(xcoord[j1]-xcoord[j2]) + (ycoord[j1]-ycoord[j2])*(ycoord[j1]-ycoord[j2]);
             if (dist <= threshold) {
                 uint common_pixels = 0;
                 for (uint i=0; i<len_spectrum; ++i) {
@@ -194,8 +196,8 @@ int main(int argc, char *argv[]) {
     }
 
     LOG("Allocating big matrix...");
-    // double **bigL = allocate_2d_with_default<double>(num_pixels + len_spectrum, num_pixels + len_spectrum, 0);
-    // double **bigW = allocate_2d_with_default<double>(num_pixels + len_spectrum, num_pixels + len_spectrum, 0);
+    // t_ims_real **bigL = allocate_2d_with_default<t_ims_real>(num_pixels + len_spectrum, num_pixels + len_spectrum, 0);
+    // t_ims_real **bigW = allocate_2d_with_default<t_ims_real>(num_pixels + len_spectrum, num_pixels + len_spectrum, 0);
     // arma::mat bigL = arma::zeros<arma::mat>(num_pixels + len_spectrum, num_pixels + len_spectrum);
     // Eigen::MatrixXf bigL(num_pixels + len_spectrum, num_pixels + len_spectrum);
     // gsl_matrix_set_zero(bigL);
@@ -206,13 +208,13 @@ int main(int argc, char *argv[]) {
     int nnz = num_pixels * (num_pixels + len_spectrum) + num_pixels * len_spectrum + len_spectrum;
     int *irow = new int[nnz];
     int *pcol = new int[n+1];
-    double *A = new double[nnz];
+    t_ims_real *A = new t_ims_real[nnz];
 
     LOG("Filling big matrix in ARPACK's column major format...");
 
     uint m=0;
     pcol[0] = 0;
-    double w_inv;
+    t_ims_real w_inv;
     for (uint j=0; j<n; ++j) { // column by column
         w_inv = 1.0 / ( (j < num_pixels) ? (little[j] + beta * pixdiag[j]) : (beta * specsdiag[j-num_pixels]) ); // will divide by W
         if (j < num_pixels) {
@@ -239,9 +241,9 @@ int main(int argc, char *argv[]) {
     LOG("Solving for " << num_eigens << " eigenvalues with ARPACK...");
 
     int nconv;
-    double *EigValR = new double[num_eigens];
-    double *EigValI = new double[num_eigens];
-    double *EigVec = new double[n * num_eigens];
+    t_ims_real *EigValR = new t_ims_real[num_eigens];
+    t_ims_real *EigValI = new t_ims_real[num_eigens];
+    t_ims_real *EigVec = new t_ims_real[n * num_eigens];
 
     nconv = AREig(EigValR, EigValI, EigVec, n, nnz, A, irow, pcol, num_eigens);
     LOG("Eigenvalues:");
@@ -276,8 +278,8 @@ int main(int argc, char *argv[]) {
     delete [] irow;
     delete [] pcol;
     delete [] A;
-    delete_2d<double>(len_spectrum, spectra);
-    delete_2d<double>(num_pixels, W);
+    delete_2d<t_ims_real>(len_spectrum, spectra);
+    delete_2d<t_ims_real>(num_pixels, W);
 
     LOG("All done.");
     return 0;
