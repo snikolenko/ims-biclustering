@@ -41,6 +41,9 @@
 
 #include "logging.hpp"
 
+#include <redsvd/redsvd.hpp>
+#include <eigen3/Eigen/Dense>
+
 using namespace std;
 
 string input_filename = "";
@@ -186,7 +189,8 @@ int main(int argc, char *argv[]) {
     LOG("Allocating big matrices...");
     // double **bigL = allocate_2d_with_default<double>(num_pixels + len_spectrum, num_pixels + len_spectrum, 0);
     // double **bigW = allocate_2d_with_default<double>(num_pixels + len_spectrum, num_pixels + len_spectrum, 0);
-    arma::sp_mat bigL = arma::zeros<arma::sp_mat>(num_pixels + len_spectrum, num_pixels + len_spectrum);
+    arma::mat bigL = arma::zeros<arma::mat>(num_pixels + len_spectrum, num_pixels + len_spectrum);
+    // Eigen::MatrixXf bigL(num_pixels + len_spectrum, num_pixels + len_spectrum);
     // gsl_matrix_set_zero(bigL);
     // gsl_matrix *bigW = gsl_matrix_alloc (num_pixels + len_spectrum, num_pixels + len_spectrum);
     // gsl_matrix_set_zero(bigW);
@@ -198,7 +202,8 @@ int main(int argc, char *argv[]) {
         for (uint j2=0; j2<num_pixels; ++j2) {
             // gsl_matrix_set(bigL, j1, j2, -W[j1][j2]);
             // bigL[j1][j2] = -W[j1][j2];
-            bigL.at(j1, j2) = -W[j1][j2];
+            // bigL.at(j1, j2) = -W[j1][j2];
+            bigL(j1, j2) = -W[j1][j2];
         }
     }
 
@@ -206,11 +211,12 @@ int main(int argc, char *argv[]) {
 
     // top right block beta*transpose(spectra)
     for (uint j=0; j<num_pixels; ++j) {
-        LOG("\t\t" << j);
+        // LOG("\t\t" << j);
         for (uint i=0; i<len_spectrum; ++i) {
             // gsl_matrix_set(bigL, j, num_pixels + i, -beta * spectra[j][i]);
             // bigL[j][num_pixels + i] = -beta * spectra[j][i];
-            bigL.at(j, num_pixels + i) = -beta * spectra[j][i];
+            // bigL.at(j, num_pixels + i) = -beta * spectra[j][i];
+            bigL(j, num_pixels + i) = -beta * spectra[j][i];
         }
     }
 
@@ -234,7 +240,8 @@ int main(int argc, char *argv[]) {
         // bigL[j][j] += on_diag[j] + beta * pixdiag[j];
         // bigW[j][j] += little[j] + beta * pixdiag[j];
         // gsl_matrix_set(bigL, j, j, gsl_matrix_get(bigL, j, j) + on_diag[j] + beta * pixdiag[j]);
-        bigL.at(j, j) = bigL.at(j, j) + on_diag[j] + beta * pixdiag[j];
+        bigL(j, j) = bigL(j, j) + on_diag[j] + beta * pixdiag[j];
+        // bigL.at(j, j) = bigL.at(j, j) + on_diag[j] + beta * pixdiag[j];
         // gsl_matrix_set(bigW, j, j, gsl_matrix_get(bigW, j, j) + little[j] + beta * pixdiag[j]);
     }
 
@@ -242,7 +249,8 @@ int main(int argc, char *argv[]) {
         // bigL[num_pixels + i][num_pixels + i] += beta * specsdiag[i];
         // bigW[num_pixels + i][num_pixels + i] += beta * specsdiag[i];
         // gsl_matrix_set(bigL, num_pixels + i, num_pixels + i, gsl_matrix_get(bigL, num_pixels + i, num_pixels + i) + beta * specsdiag[i]);
-        bigL.at(num_pixels + i, num_pixels + i) = bigL.at(num_pixels + i, num_pixels + i) + beta * specsdiag[i];
+        // bigL.at(num_pixels + i, num_pixels + i) = bigL.at(num_pixels + i, num_pixels + i) + beta * specsdiag[i];
+        bigL(num_pixels + i, num_pixels + i) = bigL(num_pixels + i, num_pixels + i) + beta * specsdiag[i];
         // gsl_matrix_set(bigW, num_pixels + i, num_pixels + i, gsl_matrix_get(bigW, num_pixels + i, num_pixels + i) + beta * specsdiag[i]);
     }
 
@@ -253,7 +261,7 @@ int main(int argc, char *argv[]) {
     for (uint j=0; j<num_pixels+len_spectrum; ++j) {
         w_inv = 1.0 / ( (j < num_pixels) ? (little[j] + beta * pixdiag[j]) : (beta * specsdiag[j-num_pixels]) );
         for (uint i=0; i<num_pixels+len_spectrum; ++i) {
-            bigL.at(i,j) = bigL.at(i,j) * w_inv;
+            bigL(i,j) = bigL(i,j) * w_inv;
         }
     }
 
@@ -261,12 +269,55 @@ int main(int argc, char *argv[]) {
 
     // at this point we have bigL and bigW all set
 
-    LOG("Computing eigenvectors...");
+    LOG("Computing eigenvalues and eigenvectors by power iteration...");
 
-    arma::cx_vec eigval;
-    arma::cx_mat eigvec;
+    // double prev_lambda = 1.0;
+    // double lambda = 0.0;
+    uint iter_num = 0;
+    uint num_eigens = 10;
+    // arma::vec prev_x = arma::randn<arma::vec>(num_pixels+len_spectrum);
+    arma::mat prev_x = arma::randn<arma::mat>(num_pixels+len_spectrum, num_eigens);
+    arma::mat x = bigL * prev_x;
+    arma::mat q, r_mat;
+    arma::vec lambda = arma::randn<arma::vec>(num_eigens);
+    arma::vec prev_lambda = arma::randn<arma::vec>(num_eigens);
+    while (arma::norm(lambda - prev_lambda) > 0.001) {
+        ++iter_num;
+        prev_lambda = lambda;
+        prev_x = x;
+        x = bigL * x;
+        for (uint i=0; i<num_eigens; ++i) {
+            lambda(i) = x(0,i) / prev_x(0,i);
+        }
+        arma::qr_econ(q, r_mat, x);
+        x = q;
+        LOG("\t\t" << iter_num << "\tdifflambda=" << norm(lambda - prev_lambda) << "lambdas:\n" << lambda);
+        // LOG("\t\t\t" << lambda << "\t" << arma::norm(bigL*x - lambda*x) << "\t" << arma::norm(prev_x - x));
+    }
+    for (uint i=0; i < num_eigens; ++i) {
+        LOG("\teigenvalue " << i << " = " << lambda(i) << " with error " << arma::norm(bigL*x.col(i) - lambda(i)*x.col(i)));
+    }
+    
+    // x.print();
+    // LOG("\tcheck against ");
+    // arma::vec test_x = (1/lambda)*(bigL * x);
+    // test_x.print();
 
-    eigs_gen(eigval, eigvec, bigL, 10);
+    // REDSVD::RedSVD rsvd(bigL, 10);
+
+
+    // LOG("Computing SVD...");
+
+    // REDSVD::RedSVD rsvd(bigL, 10);
+
+
+
+    // arma::cx_vec eigval;
+    // arma::cx_mat eigvec;
+
+    // arma::vec s = svd(bigL);
+
+    // eig_gen(eigval, eigvec, bigL);
 
     // uint mat_size = num_pixels + len_spectrum;
     // gsl_eigen_gen_workspace * gsl_workspace =  gsl_eigen_gen_alloc (mat_size);
