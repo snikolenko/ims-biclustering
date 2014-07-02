@@ -25,24 +25,13 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_randist.h>
-#include <gsl/gsl_eigen.h>
-#include <omp.h>
-
 #include <matio.h>
-
- #define ARMA_DONT_USE_CXX11
-#include <armadillo>
 
 #define no_argument 0
 #define required_argument 1 
 #define optional_argument 2
 
 #include "logging.hpp"
-
-#include <redsvd/redsvd.hpp>
-#include <eigen3/Eigen/Dense>
 
 #include "arpack++/areig.h"
 // #include "lnmatrxc.h"
