@@ -42,6 +42,7 @@ typedef double t_ims_real;
 
 string input_filename = "";
 bool matlab_input = false;
+bool matlab_input_2 = false;
 
 // weight of spatial edges in the incidence matrix
 t_ims_real alpha = 0.5;
@@ -62,6 +63,7 @@ int main(int argc, char *argv[]) {
         {"help",            no_argument,        0, 'h'},
         {"input",           required_argument,  0, 'i'},
         {"mat",             no_argument,        0, 'm'},
+        {"mat2",            no_argument,        0, 'n'},
         {"alpha",           required_argument,  0, 'a'},
         {"eigens",          required_argument,  0, 'e'},
         {0,0,0,0},
@@ -79,6 +81,7 @@ int main(int argc, char *argv[]) {
             case 'a':   alpha = atof(optarg);           break;
             case 'e':   num_eigens = atoi(optarg);      break;
             case 'm':   matlab_input = true;            break;
+            case 'n':   matlab_input_2 = true;          break;
         }
     }
 
@@ -94,7 +97,7 @@ int main(int argc, char *argv[]) {
     t_ims_real *maxima, *specsdiag, *pixdiag;
     t_ims_real *xcoord, *ycoord;
     
-    if (matlab_input) {
+    if (matlab_input || matlab_input_2) {
         LOG("Reading input from " << input_filename << " as a Matlab file...");
         matfp = Mat_Open(input_filename.c_str(), MAT_ACC_RDONLY);
 
@@ -103,22 +106,44 @@ int main(int argc, char *argv[]) {
             return EXIT_FAILURE;
         }
 
-        matvar = Mat_VarRead(matfp, "x_printed");
-        num_pixels = matvar->dims[0];
-        xcoord = allocate_1d_with_default<t_ims_real>(num_pixels, 0);
-        for (uint j=0; j<num_pixels; ++j) {
-            xcoord[j] = ((t_ims_real*)(matvar->data))[j];
+        if (matlab_input) {
+            matvar = Mat_VarRead(matfp, "x_printed");
+            num_pixels = matvar->dims[0];
+            xcoord = allocate_1d_with_default<t_ims_real>(num_pixels, 0);
+            for (uint j=0; j<num_pixels; ++j) {
+                xcoord[j] = ((t_ims_real*)(matvar->data))[j];
+            }
+
+            matvar = Mat_VarRead(matfp, "y_printed");
+            ycoord = allocate_1d_with_default<t_ims_real>(num_pixels, 0);
+            for (uint j=0; j<num_pixels; ++j) {
+                ycoord[j] = ((t_ims_real*)(matvar->data))[j];
+            }
+            
+            matvar = Mat_VarRead(matfp, "spectra");
+            len_spectrum = matvar->dims[0];
+            LOG("Read " << matvar->dims[0] << " x " << matvar->dims[1] << " matrix.");
         }
 
-        matvar = Mat_VarRead(matfp, "y_printed");
-        ycoord = allocate_1d_with_default<t_ims_real>(num_pixels, 0);
-        for (uint j=0; j<num_pixels; ++j) {
-            ycoord[j] = ((t_ims_real*)(matvar->data))[j];
+        if (matlab_input_2) {
+            matvar = Mat_VarRead(matfp, "coords");
+            char * const * c = Mat_VarGetStructFieldnames(matvar);
+            matvar_t * matvar_x = Mat_VarGetStructFieldByName(matvar, "x", 0);
+            num_pixels = matvar_x->dims[1];
+            xcoord = allocate_1d_with_default<t_ims_real>(num_pixels, 0);
+            for (uint j=0; j<num_pixels; ++j) {
+                xcoord[j] = ((t_ims_real*)(matvar_x->data))[j];
+            }
+            matvar_t * matvar_y = Mat_VarGetStructFieldByName(matvar, "y", 0);
+            ycoord = allocate_1d_with_default<t_ims_real>(num_pixels, 0);
+            for (uint j=0; j<num_pixels; ++j) {
+                ycoord[j] = ((t_ims_real*)(matvar_y->data))[j];
+            }
+            
+            matvar = Mat_VarRead(matfp, "SP");
+            len_spectrum = matvar->dims[0];
+            LOG("Read " << matvar->dims[0] << " x " << matvar->dims[1] << " matrix.");
         }
-        
-        matvar = Mat_VarRead(matfp, "spectra");
-        len_spectrum = matvar->dims[0];
-        LOG("Read " << matvar->dims[0] << " x " << matvar->dims[1] << " matrix.");
 
         spectra = allocate_2d_with_default<t_ims_real>(num_pixels, len_spectrum, 0);
         maxima = allocate_1d_with_default<t_ims_real>(num_pixels, 0);
