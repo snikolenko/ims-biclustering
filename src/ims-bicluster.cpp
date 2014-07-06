@@ -243,11 +243,11 @@ int main(int argc, char *argv[]) {
         } else {
             for (uint i=0; i<num_pixels; ++i) { // top right block beta*transpose(spectra)
                 irow[m] = i;
-                A[m++] = -beta * spectra[i][j] * w_inv;
+                A[m++] = -beta * spectra[i][j-num_pixels] * w_inv;
             }
             // bottom right block -- diagonal
             irow[m] = j;
-            A[m++] = beta * specsdiag[j] * w_inv;
+            A[m++] = beta * specsdiag[j-num_pixels] * w_inv;
         }
         pcol[j+1] = m;
     }
