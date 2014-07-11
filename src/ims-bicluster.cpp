@@ -259,7 +259,7 @@ int main(int argc, char *argv[]) {
     t_ims_real *EigValI = new t_ims_real[num_eigens];
     t_ims_real *EigVec = new t_ims_real[n * num_eigens];
 
-    nconv = AREig(EigValR, EigValI, EigVec, n, nnz, A, irow, pcol, num_eigens);
+    nconv = AREig(EigValR, EigValI, EigVec, n, nnz, A, irow, pcol, num_eigens, "SR");
     LOG("Eigenvalues:");
     for (uint i=0; i<nconv; ++i) {
         LOG("\tlambda[" << (i+1) << "] = " << EigValR[i] << (EigValI[i] >= 0.0 ? '+' : '-') << fabs(EigValI[i]));
