@@ -29,12 +29,13 @@ for i in xrange(0, num_centers):
 	eigvecs[:, i] = eigvecs_raw[(i+start)*vec_length:(i+start+1)*vec_length, 2]
 
 ### k-means clustering
-(centers, labels) = kmeans2(eigvecs, num_centers, minit = 'random')
+(centers, labels) = kmeans2(eigvecs, num_centers)
+min_label = min(labels)
 
 ### spectral
-clust = cluster.SpectralClustering(num_centers)
-labels_spec = clust.fit_predict(eigvecs)
-min_label = min(labels)
+# clust = cluster.SpectralClustering(num_centers)
+# labels_spec = clust.fit_predict(eigvecs)
+# min_label = min(labels)
 
 image = numpy.zeros(shape = (max(coords_raw[:,0])+1, max(coords_raw[:,1])+1))
 for i in xrange(0, coords_raw.shape[0]):
