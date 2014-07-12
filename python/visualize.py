@@ -78,5 +78,5 @@ fig.savefig('reports/latex/segmentation.pdf', format='pdf')
 
 ## LaTeX template
 template = file('reports/latex/template.tex', 'r').read()
-res = template % {'report_name' : args.t[0]}
+res = template % {'report_name' : args.t[0].replace('_',"\_")}
 file('reports/latex/tmp.tex', 'w').write(res)

@@ -144,6 +144,13 @@ int main(int argc, char *argv[]) {
             len_spectrum = matvar->dims[0];
             LOG("Read " << matvar->dims[0] << " x " << matvar->dims[1] << " matrix.");
         }
+    LOG("Printing pixel coords to " << input_filename << ".coords.csv");
+    ofstream ofs_coord(input_filename + ".coords.csv");
+    for (uint i=0; i<num_pixels; ++i) {
+        ofs_coord << xcoord[i] << ";" << ycoord[i] << "\n";
+    }
+    ofs_coord.close();
+
 
         spectra = allocate_2d_with_default<t_ims_real>(num_pixels, len_spectrum, 0);
         maxima = allocate_1d_with_default<t_ims_real>(num_pixels, 0);
