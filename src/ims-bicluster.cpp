@@ -281,6 +281,13 @@ int main(int argc, char *argv[]) {
     }
     ofs_vec.close();
 
+    LOG("Printing pixel coords to " << input_filename << ".coords.csv");
+    ofstream ofs_coord(input_filename + ".coords.csv");
+    for (uint i=0; i<num_pixels; ++i) {
+        ofs_coord << xcoord[i] << ";" << ycoord[i] << "\n";
+    }
+    ofs_coord.close();
+
     delete maxima;
     delete specsdiag;
     delete pixdiag;
