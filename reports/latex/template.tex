@@ -1,19 +1,75 @@
-\documentclass{article}
+\documentclass[11pt]{article}
 
+\usepackage{amsthm,amsmath,amsfonts, amssymb}
+\usepackage{concrete}
+\usepackage{euler}
+\usepackage{enumerate}
+\usepackage{fullpage}
 \usepackage{graphicx}
+\usepackage{cite}
+\usepackage{paralist}
+\usepackage{pgffor}
 
-\title{Report for %(report_name)s}
+\newcommand{\clusteringhead}[1]{
+\subsection{#1 clusters}
+
+\subsubsection{Matrix view of the dataset}
+
+???
+
+\subsubsection{Segmentation map, #1 clusters}
+
+\noindent\includegraphics[width=\textwidth]{pics/#1_segmentation.pdf}
+
+\subsubsection{Assignments of $m/z$ values to clusters, #1 clusters}
+
+\noindent\includegraphics[width=\textwidth]{pics/#1_mean_spectrum.pdf}
+
+\subsubsection{Cluster average spectra, #1 clusters}
+
+\foreach \n in {1,...,#1}{
+\par \noindent \includegraphics[width=\textwidth]{pics/#1_\n_mean_spectrum.pdf}
+}
+
+\subsubsection{Cluster heat maps, #1 clusters}
+
+\begin{center}
+\foreach \n in {1,...,#1}{
+\includegraphics[width=.45\textwidth]{pics/#1_\n_cluster_heatmap.pdf}
+}
+\end{center}
+}
+
+\title{\Large IMS Biclustering Automated Report: %(report_name)s}
+
+\date{\today}
 
 \begin{document}
 
 \maketitle
 
-This is an automated report from the IMS Biclustering tool. Please see your image segmentation on Fig.~\ref{fig:segm}.
+\section{Dataset stats}
 
-\begin{figure}[ht]
-\includegraphics[width=\textwidth]{segmentation.pdf}
-\caption{Image segmentation with color map of individual clusters.}\label{fig:segm}
-\end{figure}
+Dataset: $%(num_pixels)s$ total pixels, $%(xdim)s\times %(ydim)s$ image.
+
+Each spectrum consists of $%(len_spectrum)s$ bins ($m/z$ values).
+
+\section{Average spectrum}
+
+The graph below shows average spectrum across the dataset; $m/z$ values with maximal intensities are highlighted.
+
+\includegraphics[width=\textwidth]{pics/mean_spectrum.pdf}
+
+\section{Total ion count image}
+
+???
+
+\section{Biclustering results}
+
+\foreach \clustnum in {2,...,%(num_clusters)s}{
+\par \noindent \clusteringhead{\clustnum}
+}
 
 \end{document}
+
 
