@@ -281,5 +281,5 @@ for cur_num_centers in xrange(2, num_centers+1):
 
 ## LaTeX template
 template = file('reports/latex/template.tex', 'r').read()
-res = template % {'report_name' : "RB3", 'num_pixels' : num_pixels, 'xdim' : image.shape[0], 'ydim' : image.shape[1], 'len_spectrum' : len_spectrum, 'num_clusters' : num_centers }
+res = template % {'report_name' : args.t[0].replace('_', "\_"), 'num_pixels' : num_pixels, 'xdim' : image.shape[0], 'ydim' : image.shape[1], 'len_spectrum' : len_spectrum, 'num_clusters' : num_centers }
 file('reports/latex/tmp.tex', 'w').write(res)
