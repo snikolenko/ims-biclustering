@@ -1,5 +1,7 @@
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import sys
 import scipy.cluster.vq as vq
 import scipy.io as io
 import sklearn.cluster as cluster
@@ -36,16 +38,13 @@ def get_colormap(num_colors):
     return ListedColormap(my_palette_array[0:(num_colors+1)]) 
 
 # num_eigens = 10
-# num_centers = 15
-# eigvals_raw = genfromtxt('data/RB3.mat.val.csv', delimiter=';').astype(float)
-# eigvecs_raw = genfromtxt('data/RB3.mat.vec.csv', delimiter=';').astype(float)
-# coords_raw = genfromtxt('data/RB3.mat.coords.csv', delimiter=';').astype(float)
+# num_centers = 10
 
 ### read matrix
 mat = io.loadmat('data/RB3.mat')
 
 ### average spectrum plot
-average_spectrum = mean(mat['spectra'], axis=1)
+average_spectrum = np.mean(mat['spectra'], axis=1)
 len_spectrum = len(average_spectrum)
 spec_x = range(1, len_spectrum+1)
 average_spectrum_pairs = [(spec_x[i], average_spectrum[i]) for i in xrange(0, len_spectrum)]
@@ -97,6 +96,9 @@ plt.close()
 # min(sum_ions)
 
 ### read eigenvalues, eigenvectors, and coords
+# eigvals_raw = genfromtxt('data/RB3.mat.val.csv', delimiter=';').astype(float)
+# eigvecs_raw = genfromtxt('data/RB3.mat.vec.csv', delimiter=';').astype(float)
+# coords_raw = genfromtxt('data/RB3.mat.coords.csv', delimiter=';').astype(float)
 eigvals_raw = genfromtxt(args.e[0], delimiter=';').astype(float)
 eigvecs_raw = genfromtxt(args.v[0], delimiter=';').astype(float)
 coords_raw = genfromtxt(args.c[0], delimiter=';').astype(float)
@@ -105,9 +107,19 @@ eigvecs_raw[:,1] = eigvecs_raw[:,1].astype(int)
 coords_raw[:,0] = coords_raw[:,0] - min(coords_raw[:,0])
 coords_raw[:,1] = coords_raw[:,1] - min(coords_raw[:,1])
 
-rawvec_length = max(eigvecs_raw[:,1])
+rawvec_length = int(max(eigvecs_raw[:,1]))
 vec_length = coords_raw.shape[0]
 num_pixels = len(coords_raw)
+
+# ## LaTeX template
+# template = file('reports/latex/template.tex', 'r').read()
+# res = template % {'report_name' : "RB3", 'num_pixels' : num_pixels,
+# 	'xdim' : int(max((coords_raw[:,0]))+1), 'ydim' : int(max((coords_raw[:,1]))+1),
+# 	'len_spectrum' : len_spectrum, 'num_clusters' : num_centers }
+# file('reports/latex/tmp.tex', 'w').write(res)
+
+# sys.exit(0)
+
 
 ### select first num_eigens eigvecs
 start = 0
@@ -144,6 +156,72 @@ for cur_num_centers in xrange(2, num_centers+1):
 		total_intensities[:, i] = total_intensities[:, i] / sum(labels == i+1)
 	spec_colors = np.argmax(total_intensities, axis=1)+1
 
+	## total intensity in pixel by cluster
+	total_bycluster = np.zeros([num_pixels, cur_num_centers])
+	for i in xrange(0, cur_num_centers):
+		total_bycluster[:, i] = np.sum( mat['spectra'][spec_colors == i+1, :], axis=0 ) / sum(spec_colors == i+1)
+
+	## intensities
+	image_bycluster = zeros(shape = (cur_num_centers, cur_num_centers))
+	for i in xrange(0, cur_num_centers):
+		for j in xrange(0, cur_num_centers):
+			image_bycluster[i, j] = np.mean( mat['spectra'][spec_colors == i+1, :][:, labels == j+1] )
+
+	fig = plt.figure(figsize=(10,10))
+	# plt.tick_params(axis='both', which='major', labelsize="larger")
+	aximage = plt.imshow(image_bycluster, cmap=cm.jet, interpolation="None", )
+	plt.text(-0.75, -0.3, "pixels", horizontalalignment='center', verticalalignment='center', color="black", fontname="Sans", weight="bold")
+	plt.text(cur_num_centers-.75, cur_num_centers-.35, "m/z values", horizontalalignment='center', verticalalignment='center', color="black", fontname="Sans", weight="bold")
+	for i in xrange(0, cur_num_centers):
+		# plt.text(i, -.75, ("%d\n%.2f%%" % ( sum(spec_colors == i+1), (100*sum(spec_colors == i+1) / float(len_spectrum)) )), horizontalalignment='center', verticalalignment='center', color="black", fontname="Sans", weight="bold")
+		# plt.text(cur_num_centers-.2, i, ("%d\n%.2f%%" % ( sum(labels == i+1), (100*sum(labels == i+1) / float(num_pixels)) )), horizontalalignment='center', verticalalignment='center', color="black", fontname="Sans", weight="bold")
+		for j in xrange(0, cur_num_centers):
+			plt.text(j, i, ("%.02f" % image_bycluster[i,j]), horizontalalignment='center', verticalalignment='center', color="black", size="larger", fontname="Sans", weight="bold",
+				path_effects=[pe.withStroke(linewidth=3, foreground="w")])
+	ax2 = fig.add_axes([0.99, 0.2, 0.03, 0.6])
+	Colorbar(ax2, aximage)
+	fig.savefig('reports/latex/pics/' + str(cur_num_centers) + '_cluster_mean_intensities.pdf', format='pdf', bbox_inches='tight')
+	plt.close()
+
+	## numbers
+	image_bycluster = zeros(shape = (cur_num_centers, cur_num_centers))
+	for i in xrange(0, cur_num_centers):
+		for j in xrange(0, cur_num_centers):
+			shape = mat['spectra'][spec_colors == i+1, :][:, labels == j+1].shape
+			image_bycluster[i, j] = shape[0] * shape[1]
+
+	fig = plt.figure(figsize=(12,10))
+	aximage = plt.imshow(image_bycluster, cmap=cm.jet, interpolation="None", norm=matplotlib.colors.LogNorm())
+	plt.text(-0.75, -0.3, "pixels", horizontalalignment='center', verticalalignment='center', color="black", fontname="Sans", weight="bold")
+	plt.text(cur_num_centers-.75, cur_num_centers-.35, "m/z values", horizontalalignment='center', verticalalignment='center', color="black", fontname="Sans", weight="bold")
+	for i in xrange(0, cur_num_centers):
+		# plt.text(i, -.75, ("%d\n%.2f%%" % ( sum(spec_colors == i+1), (100*sum(spec_colors == i+1) / float(len_spectrum)) )), horizontalalignment='center', verticalalignment='center', color="black", fontname="Sans", weight="bold")
+		# plt.text(cur_num_centers-.2, i, ("%d\n%.2f%%" % ( sum(labels == i+1), (100*sum(labels == i+1) / float(num_pixels)) )), horizontalalignment='center', verticalalignment='center', color="black", fontname="Sans", weight="bold")
+		for j in xrange(0, cur_num_centers):
+			plt.text(j, i, ("{0:,}\n{1:.2f}%".format(int(image_bycluster[i,j]), 100*image_bycluster[i,j] / float(num_pixels*len_spectrum))), horizontalalignment='center', verticalalignment='center', color="black", size="larger", fontname="Sans", weight="bold",
+				path_effects=[pe.withStroke(linewidth=3, foreground="w")])
+	ax2 = fig.add_axes([0.92, 0.2, 0.03, 0.6])
+	Colorbar(ax2, aximage)
+	fig.savefig('reports/latex/pics/' + str(cur_num_centers) + '_cluster_num_values.pdf', format='pdf', bbox_inches='tight')
+	plt.close()
+
+	# ## matrix view of the dataset
+	# mz_ordering = sorted(range(0, len_spectrum), key=lambda x: (spec_colors[x], -total_intensities[x, spec_colors[x]-1]) )
+	# pixel_ordering = sorted(range(0, num_pixels), key=lambda x: (labels[x], -total_bycluster[x, labels[x]-1] ) )
+	# image = zeros(shape = (num_pixels, len_spectrum))
+	# for i in xrange(0, len_spectrum):
+	# 	image[:, i] =  mat['spectra'][mz_ordering[i], pixel_ordering]
+
+	# fig = plt.figure(figsize=(10,10))
+	# aximage = plt.imshow(image, cmap=cm.jet, interpolation="None")
+	# # props = dict(boxstyle='round', facecolor=my_palette_array[i])
+	# # plt.text(5, 5, str(i), horizontalalignment='left', verticalalignment='top', backgroundcolor=my_palette_array[i], color=my_palette_array[i], size="x-large", fontname="Sans", weight="bold",
+	# # 	path_effects=[pe.withStroke(linewidth=3, foreground="w")], bbox=props)
+	# ax2 = fig.add_axes([0.92, 0.2, 0.03, 0.6])
+	# Colorbar(ax2, aximage)
+	# fig.savefig('reports/latex/pics/' + str(cur_num_centers) + '_matrix_view.pdf', format='pdf', bbox_inches='tight')
+	# plt.close()
+
 	## average spectrum by cluster
 	for i in xrange(1, cur_num_centers_res+1):
 		fig = plt.figure(figsize=figsize_spectrum)
@@ -166,26 +244,20 @@ for cur_num_centers in xrange(2, num_centers+1):
 	ax.set_ylim(-1, max(average_spectrum))
 	ax.plot(spec_x, average_spectrum, '-', color="gray")
 	for i in xrange(1, cur_num_centers_res+1):
-		ax.scatter([spec_x[j] for j in where(spec_colors == i)[0]], [average_spectrum[j] for j in where(spec_colors == i)[0]], color=my_palette_array[i])
-		ax.scatter([spec_x[j] for j in where(spec_colors == i)[0]], [-0.5 for j in where(spec_colors == i)[0]], color=my_palette_array[i])
-		# ax.plot([spec_x[j] for j in where(spec_colors == i)[0]], [average_spectrum[j] for j in where(spec_colors == i)[0]], 'o', color=my_palette_array[i], linewidth='0')
-		# ax.plot([spec_x[j] for j in where(spec_colors == i)[0]], [0 for j in where(spec_colors == i)[0]], 's', color=my_palette_array[i], linewidth='0')
+		ax.scatter([spec_x[j] for j in np.where(spec_colors == i)[0]], [average_spectrum[j] for j in np.where(spec_colors == i)[0]], color=my_palette_array[i])
+		ax.scatter([spec_x[j] for j in np.where(spec_colors == i)[0]], [-0.5 for j in np.where(spec_colors == i)[0]], color=my_palette_array[i])
+		# ax.plot([spec_x[j] for j in np.where(spec_colors == i)[0]], [average_spectrum[j] for j in np.where(spec_colors == i)[0]], 'o', color=my_palette_array[i], linewidth='0')
+		# ax.plot([spec_x[j] for j in np.where(spec_colors == i)[0]], [0 for j in np.where(spec_colors == i)[0]], 's', color=my_palette_array[i], linewidth='0')
 	ax2 = fig.add_axes([0.92, 0.1, 0.02, 0.8])
 	cb = ColorbarBase(ax2, cmap=cmap, norm=norm, spacing='proportional', ticks=bounds, boundaries=bounds, format='%1i')
 	fig.savefig('reports/latex/pics/' + str(cur_num_centers) + '_mean_spectrum.pdf', format='pdf', bbox_inches='tight')
 	plt.close()
 
-	## total intensity in pixel by cluster
-	total_bycluster = np.zeros([num_pixels, cur_num_centers])
-	for l in xrange(0, num_pixels):
-		for i in xrange(0, cur_num_centers):
-			total_bycluster[l, i] = sum( mat['spectra'][spec_colors == i+1, l] ) / sum(spec_colors == i+1)
-
 	for i in xrange(1, cur_num_centers+1):
 		fig = plt.figure()
 		image = zeros(shape = (max(coords_raw[:,0])+1, max(coords_raw[:,1])+1))
 		for j in xrange(0, num_pixels):
-			image[ coords_raw[j,0], coords_raw[j,1] ] = total_bycluster[j, i-1]
+			image[ int(coords_raw[j,0]), int(coords_raw[j,1]) ] = total_bycluster[j, i-1]
 		aximage = plt.imshow(image, cmap=new_map, interpolation="None")
 		props = dict(boxstyle='round', facecolor=my_palette_array[i])
 		plt.text(5, 5, str(i), horizontalalignment='left', verticalalignment='top', backgroundcolor=my_palette_array[i], color=my_palette_array[i], size="x-large", fontname="Sans", weight="bold",
@@ -197,9 +269,9 @@ for cur_num_centers in xrange(2, num_centers+1):
 
 	## segmentation map picture
 	fig = plt.figure()
-	image = zeros(shape = (max(coords_raw[:,0])+1, max(coords_raw[:,1])+1))
+	image = zeros(shape = (max(int(coords_raw[:,0]))+1, max(int(coords_raw[:,1]))+1))
 	for i in xrange(0, coords_raw.shape[0]):
-		image[ coords_raw[i,0], coords_raw[i,1] ] = labels[i]
+		image[ int(coords_raw[i,0]), int(coords_raw[i,1]) ] = labels[i]
 	plt.imshow(image, cmap=cmap, norm=norm, interpolation="None")
 	ax2 = fig.add_axes([0.92, 0.2, 0.03, 0.6])
 	cb = ColorbarBase(ax2, cmap=cmap, norm=norm, spacing='proportional', ticks=bounds, boundaries=bounds, format='%1i')

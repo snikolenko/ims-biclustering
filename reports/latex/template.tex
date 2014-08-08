@@ -13,10 +13,6 @@
 \newcommand{\clusteringhead}[1]{
 \subsection{#1 clusters}
 
-\subsubsection{Matrix view of the dataset}
-
-???
-
 \subsubsection{Segmentation map, #1 clusters}
 
 \noindent\includegraphics[width=\textwidth]{pics/#1_segmentation.pdf}
@@ -24,6 +20,16 @@
 \subsubsection{Assignments of $m/z$ values to clusters, #1 clusters}
 
 \noindent\includegraphics[width=\textwidth]{pics/#1_mean_spectrum.pdf}
+
+\subsubsection{Biclustering stats}
+
+\begin{center}
+\begin{tabular}{cc}
+{\bf Cluster mean intensities} & {\bf Number of values in clusters} \\
+\includegraphics[width=.48\textwidth]{pics/#1_cluster_mean_intensities.pdf} &
+\includegraphics[width=.48\textwidth]{pics/#1_cluster_num_values.pdf}
+\end{tabular}
+\end{center}
 
 \subsubsection{Cluster average spectra, #1 clusters}
 
