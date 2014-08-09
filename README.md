@@ -6,12 +6,15 @@ Biclustering algorithms for processing imaging mass-spectrometry data.
 
 === Installation ===
 
-To compute eigenvalues, IMS-Biclustering uses ARPACK; the ARPACK++ headers are included. The following libraries have to be installed:
+To compute eigenvalues, ims-bicluster uses ARPACK; the ARPACK++ headers are included. The following libraries have to be installed:
 	libblas libsuperlu libarpack libgfortran libgfortranbegin libnsl
-To install them on an Ubuntu system, run
-	sudo apt-get install libarpack2-dev libsuperlu3-dev gfortran libatlas libatlas-dev libblas-dev 
+To install them on a Debian-like system, run
+	sudo apt-get install libarpack2-dev libsuperlu3-dev gfortran libatlas libatlas-dev libblas-dev libboost-system-dev libboost-date-time-dev libboost-filesystem-dev
 
-Reports generation uses LaTeX and python with numpy and matplotlib installed:
+To read Matlab input files, ims-bicluster uses the matio library. It can be obtained from
+	http://matio.sourceforge.net/
+
+Reports generation uses LaTeX and python with numpy and matplotlib packages:
 	sudo apt-get install latex texlive dvipng libfreetype6-dev libpng-dev
 	sudo pip install matplotlib numpy scikit-learn statsmodels
 
