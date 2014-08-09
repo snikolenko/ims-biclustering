@@ -40,12 +40,14 @@ Usage: ims-bicluster
 --------------------
 
 	 ./bin/ims-bicluster --mat --eigens=n --input=ims-dataset.mat
+
 Computes n largest eigenvalues for the matrix encoded as a Matlab .mat file with the following structure:
  * x_printed	-- vector of X coordinates of all pixels in the dataset (len=num_pixels)
  * y_printed	-- vector of Y coordinates of all pixels in the dataset (len=num_pixels)
  * spectra		-- matrix of intensities for each pixel (shape = num_pixels x len_spectrum)
-
+ 
 	 ./bin/ims-bicluster --mat2 --eigens=n --input=ims-dataset.mat
+
 Computes n largest eigenvalues for the matrix encoded as a Matlab .mat file with the following structure:
  * x	-- vector of X coordinates of all pixels in the dataset (len=num_pixels)
  * y	-- vector of Y coordinates of all pixels in the dataset (len=num_pixels)
