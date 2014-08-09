@@ -91,9 +91,18 @@ fig.savefig('reports/latex/pics/mean_spectrum.pdf', format='pdf', bbox_inches='t
 plt.close()
 
 # # sum of ions
-# sum_ions = sum(mat['spectra'], axis=0)
-# max(sum_ions)
-# min(sum_ions)
+sum_ions = sum(mat['spectra'], axis=0)
+fig = plt.figure()
+image = np.zeros(shape = (int(max(coords_raw[:,0])+1), int(max(coords_raw[:,1])+1)))
+colors = [('white')] + [(cm.jet(ind_color)) for ind_color in xrange(1,256)]
+new_map = matplotlib.colors.LinearSegmentedColormap.from_list('new_map', colors, N=256)
+for i in xrange(0, coords_raw.shape[0]):
+	image[ int(coords_raw[i,0]), int(coords_raw[i,1]) ] = sum_ions[i]
+plt.imshow(image, cmap=new_map, interpolation="None")
+ax2 = fig.add_axes([0.92, 0.2, 0.03, 0.6])
+cb = ColorbarBase(ax2, cmap=new_map, spacing='proportional', boundaries=linspace(0, max(sum_ions)), format='%1i')
+fig.savefig('reports/latex/pics/sum_ions.pdf', format='pdf', bbox_inches='tight')
+plt.close()
 
 ### read eigenvalues, eigenvectors, and coords
 # eigvals_raw = genfromtxt('data/RB3.mat.val.csv', delimiter=';').astype(float)
@@ -205,12 +214,12 @@ for cur_num_centers in xrange(2, num_centers+1):
 	fig.savefig('reports/latex/pics/' + str(cur_num_centers) + '_cluster_num_values.pdf', format='pdf', bbox_inches='tight')
 	plt.close()
 
-	# ## matrix view of the dataset
-	# mz_ordering = sorted(range(0, len_spectrum), key=lambda x: (spec_colors[x], -total_intensities[x, spec_colors[x]-1]) )
-	# pixel_ordering = sorted(range(0, num_pixels), key=lambda x: (labels[x], -total_bycluster[x, labels[x]-1] ) )
-	# image = zeros(shape = (num_pixels, len_spectrum))
-	# for i in xrange(0, len_spectrum):
-	# 	image[:, i] =  mat['spectra'][mz_ordering[i], pixel_ordering]
+	## matrix view of the dataset
+	mz_ordering = sorted(range(0, len_spectrum), key=lambda x: (spec_colors[x], -total_intensities[x, spec_colors[x]-1]) )
+	pixel_ordering = sorted(range(0, num_pixels), key=lambda x: (labels[x], -total_bycluster[x, labels[x]-1] ) )
+	image = zeros(shape = (num_pixels, len_spectrum))
+	for i in xrange(0, len_spectrum):
+		image[:, i] =  mat['spectra'][mz_ordering[i], pixel_ordering]
 
 	# fig = plt.figure(figsize=(10,10))
 	# aximage = plt.imshow(image, cmap=cm.jet, interpolation="None")
