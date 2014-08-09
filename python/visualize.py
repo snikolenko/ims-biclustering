@@ -18,6 +18,7 @@ figsize_spectrum = (25,8)
 
 parser = argparse.ArgumentParser(description='Cluster eigenvectors and generate a pretty report.')
 parser.add_argument('-t', metavar='TITLE', type=str, nargs='+', help='project title')
+parser.add_argument('-x', metavar='MAT', type=str, nargs='+', help='Matlab matrix')
 parser.add_argument('-e', metavar='VALUES', type=str, nargs='+', help='file of eigenvalues')
 parser.add_argument('-v', metavar='VECTORS', type=str, nargs='+', help='file of eigenvectors')
 parser.add_argument('-c', metavar='COORDS', type=str, nargs='+', help='file of coordinates')
@@ -41,7 +42,7 @@ def get_colormap(num_colors):
 # num_centers = 10
 
 ### read matrix
-mat = io.loadmat('data/RB3.mat')
+mat = io.loadmat(args.x[0])
 
 ### average spectrum plot
 average_spectrum = np.mean(mat['spectra'], axis=1)
