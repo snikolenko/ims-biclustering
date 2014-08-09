@@ -134,7 +134,7 @@ start = 0
 if (abs(eigvals_raw[0,0]) < 1e-05):
 	start = 1
 eigvals = eigvals_raw[start:(start+num_eigens), 0]
-eigvecs = zeros(shape = (vec_length, num_eigens))
+eigvecs = np.zeros(shape = (vec_length, num_eigens))
 for i in xrange(0, num_eigens):
 	eigvecs[:, i] = eigvecs_raw[(i+start)*rawvec_length:(i+start)*rawvec_length + vec_length, 2]
 
@@ -170,7 +170,7 @@ for cur_num_centers in xrange(2, num_centers+1):
 		total_bycluster[:, i] = np.sum( mat['spectra'][spec_colors == i+1, :], axis=0 ) / sum(spec_colors == i+1)
 
 	## intensities
-	image_bycluster = zeros(shape = (cur_num_centers, cur_num_centers))
+	image_bycluster = np.zeros(shape = (cur_num_centers, cur_num_centers))
 	for i in xrange(0, cur_num_centers):
 		for j in xrange(0, cur_num_centers):
 			image_bycluster[i, j] = np.mean( mat['spectra'][spec_colors == i+1, :][:, labels == j+1] )
@@ -192,7 +192,7 @@ for cur_num_centers in xrange(2, num_centers+1):
 	plt.close()
 
 	## numbers
-	image_bycluster = zeros(shape = (cur_num_centers, cur_num_centers))
+	image_bycluster = np.zeros(shape = (cur_num_centers, cur_num_centers))
 	for i in xrange(0, cur_num_centers):
 		for j in xrange(0, cur_num_centers):
 			shape = mat['spectra'][spec_colors == i+1, :][:, labels == j+1].shape
@@ -216,7 +216,7 @@ for cur_num_centers in xrange(2, num_centers+1):
 	## matrix view of the dataset
 	mz_ordering = sorted(range(0, len_spectrum), key=lambda x: (spec_colors[x], -total_intensities[x, spec_colors[x]-1]) )
 	pixel_ordering = sorted(range(0, num_pixels), key=lambda x: (labels[x], -total_bycluster[x, labels[x]-1] ) )
-	image = zeros(shape = (num_pixels, len_spectrum))
+	image = np.zeros(shape = (num_pixels, len_spectrum))
 	for i in xrange(0, len_spectrum):
 		image[:, i] =  mat['spectra'][mz_ordering[i], pixel_ordering]
 
@@ -263,7 +263,7 @@ for cur_num_centers in xrange(2, num_centers+1):
 
 	for i in xrange(1, cur_num_centers+1):
 		fig = plt.figure()
-		image = zeros(shape = (max(coords_raw[:,0])+1, max(coords_raw[:,1])+1))
+		image = np.zeros(shape = ( int(max(coords_raw[:,0])+1), int(max(coords_raw[:,1])+1) ) )
 		for j in xrange(0, num_pixels):
 			image[ int(coords_raw[j,0]), int(coords_raw[j,1]) ] = total_bycluster[j, i-1]
 		aximage = plt.imshow(image, cmap=new_map, interpolation="None")
@@ -277,7 +277,7 @@ for cur_num_centers in xrange(2, num_centers+1):
 
 	## segmentation map picture
 	fig = plt.figure()
-	image = zeros(shape = (max(int(coords_raw[:,0]))+1, max(int(coords_raw[:,1]))+1))
+	image = np.zeros(shape = ( int(max(coords_raw[:,0]))+1, int(max(coords_raw[:,1]))+1))
 	for i in xrange(0, coords_raw.shape[0]):
 		image[ int(coords_raw[i,0]), int(coords_raw[i,1]) ] = labels[i]
 	plt.imshow(image, cmap=cmap, norm=norm, interpolation="None")
