@@ -74,7 +74,6 @@ for i in xrange(1, len(max_spectra_toplot)):
 	else:
 		max_spectra_ticks.append(max_spectra_toplot[i])
 
-
 max_x = [max_spectra_toplot[i][0] for i in xrange(0, len(max_spectra_toplot))]
 max_y = [max_spectra_toplot[i][1] for i in xrange(0, len(max_spectra_toplot))]
 max_x_ticks = [max_spectra_ticks[i][0] for i in xrange(0, len(max_spectra_ticks))]
@@ -84,7 +83,7 @@ if max_x_ticks[0] > xtick_spread:
 	max_y_ticks = [average_spectrum[0]] + max_y_ticks
 if max_x_ticks[len(max_x_ticks)-1] < len_spectrum - xtick_spread + 1:
 	max_x_ticks = max_x_ticks + [len_spectrum+1]
-	max_y_ticks = max_y_ticks + [average_spectrum[len_spectrum]]
+	max_y_ticks = max_y_ticks + [average_spectrum[len_spectrum-1]]
 
 
 fig = plt.figure(figsize=figsize_spectrum)
