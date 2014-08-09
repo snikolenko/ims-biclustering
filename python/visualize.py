@@ -52,7 +52,7 @@ if matlab_type == 2:
 	spec_varname = 'SP'
 
 ### average spectrum plot
-average_spectrum = np.mean(mat['spectra'], axis=1)
+average_spectrum = np.mean(mat[spec_varname], axis=1)
 len_spectrum = len(average_spectrum)
 spec_x = range(1, len_spectrum+1)
 average_spectrum_pairs = [(spec_x[i], average_spectrum[i]) for i in xrange(0, len_spectrum)]
@@ -124,7 +124,7 @@ num_pixels = len(coords_raw)
 # sys.exit(0)
 
 # # sum of ions
-sum_ions = np.sum(mat['spectra'], axis=0)
+sum_ions = np.sum(mat[spec_varname], axis=0)
 fig = plt.figure()
 image = np.zeros(shape = (int(max(coords_raw[:,0])+1), int(max(coords_raw[:,1])+1)))
 colors = [('white')] + [(cm.jet(ind_color)) for ind_color in xrange(1,256)]
@@ -167,7 +167,7 @@ for cur_num_centers in xrange(2, num_centers+1):
 	## total intensity by label
 	total_intensities = np.zeros([len_spectrum, cur_num_centers])
 	for l in xrange(0, num_pixels):
-		total_intensities[:, labels[l]-1] = total_intensities[:, labels[l]-1] + mat['spectra'][:, l]
+		total_intensities[:, labels[l]-1] = total_intensities[:, labels[l]-1] + mat[spec_varname][:, l]
 	for i in xrange(0, cur_num_centers_res):
 		total_intensities[:, i] = total_intensities[:, i] / sum(labels == i+1)
 	spec_colors = np.argmax(total_intensities, axis=1)+1
@@ -175,13 +175,13 @@ for cur_num_centers in xrange(2, num_centers+1):
 	## total intensity in pixel by cluster
 	total_bycluster = np.zeros([num_pixels, cur_num_centers])
 	for i in xrange(0, cur_num_centers):
-		total_bycluster[:, i] = np.sum( mat['spectra'][spec_colors == i+1, :], axis=0 ) / sum(spec_colors == i+1)
+		total_bycluster[:, i] = np.sum( mat[spec_varname][spec_colors == i+1, :], axis=0 ) / sum(spec_colors == i+1)
 
 	## intensities
 	image_bycluster = np.zeros(shape = (cur_num_centers, cur_num_centers))
 	for i in xrange(0, cur_num_centers):
 		for j in xrange(0, cur_num_centers):
-			image_bycluster[i, j] = np.mean( mat['spectra'][spec_colors == i+1, :][:, labels == j+1] )
+			image_bycluster[i, j] = np.mean( mat[spec_varname][spec_colors == i+1, :][:, labels == j+1] )
 
 	fig = plt.figure(figsize=(10,10))
 	# plt.tick_params(axis='both', which='major', labelsize="larger")
@@ -203,7 +203,7 @@ for cur_num_centers in xrange(2, num_centers+1):
 	image_bycluster = np.zeros(shape = (cur_num_centers, cur_num_centers))
 	for i in xrange(0, cur_num_centers):
 		for j in xrange(0, cur_num_centers):
-			shape = mat['spectra'][spec_colors == i+1, :][:, labels == j+1].shape
+			shape = mat[spec_varname][spec_colors == i+1, :][:, labels == j+1].shape
 			image_bycluster[i, j] = shape[0] * shape[1]
 
 	fig = plt.figure(figsize=(12,10))
@@ -226,7 +226,7 @@ for cur_num_centers in xrange(2, num_centers+1):
 	pixel_ordering = sorted(range(0, num_pixels), key=lambda x: (labels[x], -total_bycluster[x, labels[x]-1] ) )
 	image = np.zeros(shape = (num_pixels, len_spectrum))
 	for i in xrange(0, len_spectrum):
-		image[:, i] =  mat['spectra'][mz_ordering[i], pixel_ordering]
+		image[:, i] =  mat[spec_varname][mz_ordering[i], pixel_ordering]
 
 	# fig = plt.figure(figsize=(10,10))
 	# aximage = plt.imshow(image, cmap=cm.jet, interpolation="None")
