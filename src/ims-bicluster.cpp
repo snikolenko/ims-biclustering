@@ -50,6 +50,8 @@ t_ims_real alpha = 0.5;
 t_ims_real max_force = 120;
 // distance inside which we introduce spatial edges
 t_ims_real threshold = 1.5 * 1.5;
+// denominator threshold
+t_ims_real r = 0.20;
 // how many eigenvalues to find
 int num_eigens = 10;
 
@@ -66,6 +68,8 @@ int main(int argc, char *argv[]) {
         {"mat2",            no_argument,        0, 'n'},
         {"alpha",           required_argument,  0, 'a'},
         {"eigens",          required_argument,  0, 'e'},
+        {"r",               required_argument,  0, 'r'},
+        {"maxforce",        required_argument,  0, 'f'},
         {0,0,0,0},
     };
 
@@ -79,6 +83,8 @@ int main(int argc, char *argv[]) {
             case 'h':   return help(argv);              break;
             case 'i':   input_filename = optarg;        break;
             case 'a':   alpha = atof(optarg);           break;
+            case 'r':   r = atof(optarg);               break;
+            case 'f':   max_force = atof(optarg);       break;
             case 'e':   num_eigens = atoi(optarg);      break;
             case 'm':   matlab_input = true;            break;
             case 'n':   matlab_input_2 = true;          break;
@@ -172,7 +178,6 @@ int main(int argc, char *argv[]) {
     }
 
     uint k = (uint)(8*len_spectrum/(t_ims_real)9);
-    t_ims_real r = 0.20;
 
     // find maximal elements
     LOG("Finding maximal elements...");
