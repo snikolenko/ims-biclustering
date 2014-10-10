@@ -65,6 +65,7 @@ int main(int argc, char *argv[]) {
         {"help",            no_argument,        0, 'h'},
         {"input",           required_argument,  0, 'i'},
         {"mat",             no_argument,        0, 'm'},
+        {"mat1",            no_argument,        0, '1'},
         {"mat2",            no_argument,        0, 'n'},
         {"alpha",           required_argument,  0, 'a'},
         {"eigens",          required_argument,  0, 'e'},
@@ -87,6 +88,7 @@ int main(int argc, char *argv[]) {
             case 'f':   max_force = atof(optarg);       break;
             case 'e':   num_eigens = atoi(optarg);      break;
             case 'm':   matlab_input = true;            break;
+            case '1':   matlab_input = true;            break;
             case 'n':   matlab_input_2 = true;          break;
         }
     }
