@@ -114,15 +114,6 @@ rawvec_length = int(max(eigvecs_raw[:,1]))
 vec_length = coords_raw.shape[0]
 num_pixels = len(coords_raw)
 
-# ## LaTeX template
-# template = file('reports/latex/template.tex', 'r').read()
-# res = template % {'report_name' : "RB3", 'num_pixels' : num_pixels,
-# 	'xdim' : int(max((coords_raw[:,0]))+1), 'ydim' : int(max((coords_raw[:,1]))+1),
-# 	'len_spectrum' : len_spectrum, 'num_clusters' : num_centers }
-# file('reports/latex/tmp.tex', 'w').write(res)
-
-# sys.exit(0)
-
 # # sum of ions
 sum_ions = np.sum(mat[spec_varname], axis=0)
 fig = plt.figure()
@@ -143,7 +134,7 @@ if (abs(eigvals_raw[0,0]) < 1e-05):
 	start = 1
 eigvals = eigvals_raw[start:(start+num_eigens), 0]
 eigvecs = np.zeros(shape = (vec_length, num_eigens))
-for i in xrange(0, num_eigens):
+for i in xrange(0, num_eigens-start):
 	eigvecs[:, i] = eigvecs_raw[(i+start)*rawvec_length:(i+start)*rawvec_length + vec_length, 2]
 
 white_eigvecs = vq.whiten(eigvecs)

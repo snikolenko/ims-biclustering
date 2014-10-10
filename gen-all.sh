@@ -5,16 +5,16 @@ mode=$2
 
 if [ -z "$3" ]
   then
-    param_r=$3
+    param_r=0.2
   else
-  	param_r=0.2
+  	param_r=$3
 fi
 
 if [ -z "$4" ]
   then
-    param_mf=$4
+    param_mf=100
   else
-  	param_mf=100
+  	param_mf=$4
 fi
 
 echo "Running ims-bicluster for $d..."
