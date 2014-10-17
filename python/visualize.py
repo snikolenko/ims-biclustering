@@ -133,7 +133,7 @@ start = 0
 if (abs(eigvals_raw[0,0]) < 1e-05):
 	start = 1
 eigvals = eigvals_raw[start:(start+num_eigens), 0]
-eigvecs = np.zeros(shape = (vec_length, num_eigens))
+eigvecs = np.zeros(shape = (vec_length, num_eigens-start))
 for i in xrange(0, num_eigens-start):
 	eigvecs[:, i] = eigvecs_raw[(i+start)*rawvec_length:(i+start)*rawvec_length + vec_length, 2]
 
