@@ -97,8 +97,8 @@ int main(int argc, char *argv[]) {
     // weight of bipartite edges in the incidence matrix
     t_ims_real beta = 1 - alpha;
 
-    mat_t *matfp;
-    matvar_t *matvar;
+    mat_t *matfp = NULL;
+    matvar_t *matvar = NULL;
 
     uint len_spectrum, num_pixels;
     t_ims_real **spectra;
@@ -110,32 +110,55 @@ int main(int argc, char *argv[]) {
         matfp = Mat_Open(input_filename.c_str(), MAT_ACC_RDONLY);
 
         if ( NULL == matfp ) {
-            fprintf(stderr,"Error creating MAT file \"matfile5.mat\"!\n");
+            fprintf(stderr,"Error reading MAT file!\n");
             return EXIT_FAILURE;
         }
 
+        uint num_vars = 0;
+        string matlab_single_var_name = "coords";
+        while ( (matvar = Mat_VarReadNextInfo(matfp)) != NULL ) {
+            LOG("Matlab variable:\t" << matvar->name);
+            Mat_VarFree(matvar);
+            matvar = NULL;
+            ++num_vars;
+        }
+        if (num_vars == 1) {
+            LOG("Got only one variable in .mat file, assuming it contains the dataset...");
+            matlab_input = false;
+            matlab_input_2 = true;
+        }
+
         if (matlab_input) {
+            LOG("1");
+
             matvar = Mat_VarRead(matfp, "x_printed");
             num_pixels = matvar->dims[0];
+            LOG("2: num_pixels=" << num_pixels);
             xcoord = allocate_1d_with_default<t_ims_real>(num_pixels, 0);
             for (uint j=0; j<num_pixels; ++j) {
                 xcoord[j] = ((t_ims_real*)(matvar->data))[j];
             }
+            LOG("3");
 
             matvar = Mat_VarRead(matfp, "y_printed");
             ycoord = allocate_1d_with_default<t_ims_real>(num_pixels, 0);
             for (uint j=0; j<num_pixels; ++j) {
                 ycoord[j] = ((t_ims_real*)(matvar->data))[j];
             }
-            
+            LOG("4");
+
             matvar = Mat_VarRead(matfp, "spectra");
             len_spectrum = matvar->dims[0];
             LOG("Read " << matvar->dims[0] << " x " << matvar->dims[1] << " matrix.");
+            LOG("5");
         }
 
         if (matlab_input_2) {
-            matvar = Mat_VarRead(matfp, "coords");
+            LOG("Single variable format");
+            matvar = Mat_VarRead(matfp, matlab_single_var_name.c_str());
             char * const * c = Mat_VarGetStructFieldnames(matvar);
+            LOG(c[0]);
+            LOG(c[1]);
             matvar_t * matvar_x = Mat_VarGetStructFieldByName(matvar, "x", 0);
             num_pixels = matvar_x->dims[1];
             xcoord = allocate_1d_with_default<t_ims_real>(num_pixels, 0);
