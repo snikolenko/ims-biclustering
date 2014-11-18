@@ -116,45 +116,48 @@ int main(int argc, char *argv[]) {
 
         uint num_vars = 0;
         string matlab_single_var_name = "coords";
+
+        bool flat_matlab_format = false;
         while ( (matvar = Mat_VarReadNextInfo(matfp)) != NULL ) {
-            LOG("Matlab variable:\t" << matvar->name);
+            // LOG("Matlab variable:\t" << matvar->name);
+            if (!strcmp(matvar->name, "x")) {
+                flat_matlab_format = true;
+                LOG("Guessing Matlab format (x, y, SP)");
+            }
             Mat_VarFree(matvar);
             matvar = NULL;
             ++num_vars;
         }
         if (num_vars == 1) {
-            LOG("Got only one variable in .mat file, assuming it contains the dataset...");
+            LOG("Got only one variable in .mat file, assuming it contains the dataset in (x, y, SP) fields...");
             matlab_input = false;
             matlab_input_2 = true;
         }
 
         if (matlab_input) {
-            LOG("1");
-
-            matvar = Mat_VarRead(matfp, "x_printed");
+            string matlab_first_var = flat_matlab_format ? "x" : "x_printed";
+            matvar = Mat_VarRead(matfp, matlab_first_var.c_str());
             num_pixels = matvar->dims[0];
-            LOG("2: num_pixels=" << num_pixels);
             xcoord = allocate_1d_with_default<t_ims_real>(num_pixels, 0);
             for (uint j=0; j<num_pixels; ++j) {
                 xcoord[j] = ((t_ims_real*)(matvar->data))[j];
             }
-            LOG("3");
 
-            matvar = Mat_VarRead(matfp, "y_printed");
+            string matlab_second_var = flat_matlab_format ? "y" : "y_printed";
+            matvar = Mat_VarRead(matfp, matlab_second_var.c_str());
             ycoord = allocate_1d_with_default<t_ims_real>(num_pixels, 0);
             for (uint j=0; j<num_pixels; ++j) {
                 ycoord[j] = ((t_ims_real*)(matvar->data))[j];
             }
-            LOG("4");
 
-            matvar = Mat_VarRead(matfp, "spectra");
+            string matlab_third_var = flat_matlab_format ? "SP" : "spectra";
+            matvar = Mat_VarRead(matfp, matlab_third_var.c_str());
             len_spectrum = matvar->dims[0];
             LOG("Read " << matvar->dims[0] << " x " << matvar->dims[1] << " matrix.");
-            LOG("5");
         }
 
         if (matlab_input_2) {
-            LOG("Single variable format");
+            LOG("Single variable format with (x, y, SP) fields");
             matvar = Mat_VarRead(matfp, matlab_single_var_name.c_str());
             char * const * c = Mat_VarGetStructFieldnames(matvar);
             LOG(c[0]);
