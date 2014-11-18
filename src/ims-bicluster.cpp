@@ -106,8 +106,9 @@ int main(int argc, char *argv[]) {
     t_ims_real *xcoord, *ycoord;
     
     if (matlab_input || matlab_input_2) {
-        LOG("Reading input from " << input_filename << " as a Matlab file...");
-        matfp = Mat_Open(input_filename.c_str(), MAT_ACC_RDONLY);
+        LOG("Reading input from " << input_filename << ".mat as a Matlab file...");
+	string mat_fname = input_filename + ".mat";
+        matfp = Mat_Open(mat_fname.c_str(), MAT_ACC_RDONLY);
 
         if ( NULL == matfp ) {
             fprintf(stderr,"Error reading MAT file!\n");

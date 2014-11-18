@@ -1,7 +1,13 @@
 #!/bin/bash
 
 d=$1
-mode=$2
+
+if [ -z "$2" ]
+  then
+    mode='1'
+  else
+    mode=$2
+fi
 
 if [ -z "$3" ]
   then

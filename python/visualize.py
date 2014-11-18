@@ -48,9 +48,7 @@ def get_colormap(num_colors):
 
 ### read matrix
 mat = io.loadmat(args.x[0])
-spec_varname = 'spectra'
-if matlab_type == 2:
-	spec_varname = 'SP'
+spec_varname = 'SP'
 
 ### average spectrum plot
 average_spectrum = np.mean(mat[spec_varname], axis=1)
