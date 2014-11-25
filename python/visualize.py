@@ -49,6 +49,9 @@ def get_colormap(num_colors):
 ### read matrix
 mat = io.loadmat(args.x[0])
 spec_varname = 'SP'
+if not spec_varname in mat:
+	if 'spectra' in mat:
+		spec_varname = 'spectra'
 
 ### average spectrum plot
 average_spectrum = np.mean(mat[spec_varname], axis=1)
@@ -144,6 +147,9 @@ for cur_num_centers in xrange(2, num_centers+1):
 	min_label = min(labels)
 	cur_num_centers_res = max(labels)
 
+	with open("clusterlabels.%d.csv" % cur_num_centers, "w") as outfile:
+		outfile.write("\n".join([ "%d" % labels[i] for i in xrange(len(labels)) ]))
+
 	## color map for segmentation
 	cmap = get_colormap(cur_num_centers)
 	bounds = linspace(0,cur_num_centers_res+1,cur_num_centers_res+2)
@@ -173,7 +179,6 @@ for cur_num_centers in xrange(2, num_centers+1):
 			image_bycluster[i, j] = np.mean( mat[spec_varname][spec_colors == i+1, :][:, labels == j+1] )
 
 	fig = plt.figure(figsize=(10,10))
-	# plt.tick_params(axis='both', which='major', labelsize="larger")
 	aximage = plt.imshow(image_bycluster, cmap=cm.jet, interpolation="None", )
 	plt.text(-0.75, -0.3, "pixels", horizontalalignment='center', verticalalignment='center', color="black", fontname="Sans", weight="bold")
 	plt.text(cur_num_centers-.75, cur_num_centers-.35, "m/z values", horizontalalignment='center', verticalalignment='center', color="black", fontname="Sans", weight="bold")
@@ -211,11 +216,11 @@ for cur_num_centers in xrange(2, num_centers+1):
 	plt.close()
 
 	## matrix view of the dataset
-	mz_ordering = sorted(range(0, len_spectrum), key=lambda x: (spec_colors[x], -total_intensities[x, spec_colors[x]-1]) )
-	pixel_ordering = sorted(range(0, num_pixels), key=lambda x: (labels[x], -total_bycluster[x, labels[x]-1] ) )
-	image = np.zeros(shape = (num_pixels, len_spectrum))
-	for i in xrange(0, len_spectrum):
-		image[:, i] =  mat[spec_varname][mz_ordering[i], pixel_ordering]
+	# mz_ordering = sorted(range(0, len_spectrum), key=lambda x: (spec_colors[x], -total_intensities[x, spec_colors[x]-1]) )
+	# pixel_ordering = sorted(range(0, num_pixels), key=lambda x: (labels[x], -total_bycluster[x, labels[x]-1] ) )
+	# image = np.zeros(shape = (num_pixels, len_spectrum))
+	# for i in xrange(0, len_spectrum):
+	# 	image[:, i] =  mat[spec_varname][mz_ordering[i], pixel_ordering]
 
 	# fig = plt.figure(figsize=(10,10))
 	# aximage = plt.imshow(image, cmap=cm.jet, interpolation="None")
@@ -257,6 +262,10 @@ for cur_num_centers in xrange(2, num_centers+1):
 	cb = ColorbarBase(ax2, cmap=cmap, norm=norm, spacing='proportional', ticks=bounds, boundaries=bounds, format='%1i')
 	fig.savefig('reports/latex/pics/' + str(cur_num_centers) + '_mean_spectrum.pdf', format='pdf', bbox_inches='tight')
 	plt.close()
+
+	## colored spectrum output to file
+	with open("mzclusterlabels.%d.csv" % cur_num_centers, "w") as outfile:
+		outfile.write("\n".join([ "%d" % spec_colors[i] for i in xrange(len_spectrum) ]))
 
 	for i in xrange(1, cur_num_centers+1):
 		fig = plt.figure()
