@@ -147,8 +147,8 @@ for cur_num_centers in xrange(2, num_centers+1):
 	min_label = min(labels)
 	cur_num_centers_res = max(labels)
 
-	with open("clusterlabels.%d.csv" % cur_num_centers, "w") as outfile:
-		outfile.write("\n".join([ "%d" % labels[i] for i in xrange(len(labels)) ]))
+	# with open("clusterlabels.%d.csv" % cur_num_centers, "w") as outfile:
+	# 	outfile.write("\n".join([ "%d" % labels[i] for i in xrange(len(labels)) ]))
 
 	## color map for segmentation
 	cmap = get_colormap(cur_num_centers)
@@ -264,8 +264,8 @@ for cur_num_centers in xrange(2, num_centers+1):
 	plt.close()
 
 	## colored spectrum output to file
-	with open("mzclusterlabels.%d.csv" % cur_num_centers, "w") as outfile:
-		outfile.write("\n".join([ "%d" % spec_colors[i] for i in xrange(len_spectrum) ]))
+	# with open("mzclusterlabels.%d.csv" % cur_num_centers, "w") as outfile:
+	# 	outfile.write("\n".join([ "%d" % spec_colors[i] for i in xrange(len_spectrum) ]))
 
 	for i in xrange(1, cur_num_centers+1):
 		fig = plt.figure()
